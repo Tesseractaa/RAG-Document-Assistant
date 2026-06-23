@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+:root[data-theme="dark"] {
+  --bg: #0a0a0f;
+  --surface: #12121a;
+  --surface-raised: #1a1a26;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.15);
+  --text-primary: #f0f0f5;
+  --text-secondary: #8888a0;
+  --text-tertiary: #55556a;
+  --accent: #7f77dd;
+  --accent-dim: rgba(127, 119, 221, 0.15);
+  --accent-hover: #9990e8;
+  --success: #1d9e75;
+  --success-dim: rgba(29, 158, 117, 0.15);
+  --danger: #e24b4a;
+  --danger-dim: rgba(226, 75, 74, 0.15);
+  --scrollbar: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme="light"] {
+  --bg: #f0f0f5;
+  --surface: #ffffff;
+  --surface-raised: #f8f8fc;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.15);
+  --text-primary: #0a0a0f;
+  --text-secondary: #55556a;
+  --text-tertiary: #8888a0;
+  --accent: #534ab7;
+  --accent-dim: rgba(83, 74, 183, 0.1);
+  --accent-hover: #6358c8;
+  --success: #0f6e56;
+  --success-dim: rgba(15, 110, 86, 0.1);
+  --danger: #a32d2d;
+  --danger-dim: rgba(163, 45, 45, 0.1);
+  --scrollbar: rgba(0, 0, 0, 0.1);
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  transition: background 0.2s ease, color 0.2s ease;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 3px; }
+
+::selection {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
