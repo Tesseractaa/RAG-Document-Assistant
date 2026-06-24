@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { uploadDocument, queryDocument, resetCollection } from './api'
 
 export default function App() {
@@ -12,11 +12,17 @@ export default function App() {
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(false)
   const [resetting, setResetting] = useState(false)
+  const [error, setError] = useState(null)
+  const bottomRef = useRef(null)
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
     localStorage.setItem('theme', theme)
   }, [theme])
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, loading])
 
   const toggleTheme = () =>
     setTheme(prev => prev === 'dark' ? 'light' : 'dark')
@@ -29,21 +35,41 @@ export default function App() {
     const selected = e.target.files[0]
     if (!selected) return
     setUploading(true)
+    setError(null)
     try {
       await uploadDocument(selected)
       setFiles(prev => [...prev, selected])
       setUploaded(true)
     } catch (err) {
-      console.error('Upload failed:', err)
+      setError('Upload failed. Make sure the backend is running.')
     } finally {
       setUploading(false)
     }
   }
 
-  const handleKeyDown = async (e) => {
-    if (e.key !== 'Enter' || !question.trim() || !uploaded) return
+  const handleReset = async (e) => {
+    e.stopPropagation()
+    setResetting(true)
+    setError(null)
+    try {
+      await resetCollection()
+      setFiles([])
+      setUploaded(false)
+      setMessages([])
+      setQuestion('')
+      document.getElementById('file-input').value = ''
+    } catch (err) {
+      setError('Reset failed. Make sure the backend is running.')
+    } finally {
+      setResetting(false)
+    }
+  }
+
+  const handleSubmit = async () => {
+    if (!question.trim() || !uploaded || loading) return
     const q = question.trim()
     setQuestion('')
+    setError(null)
     setMessages(prev => [...prev, { role: 'user', text: q }])
     setLoading(true)
     try {
@@ -54,9 +80,10 @@ export default function App() {
         citations: res.citations
       }])
     } catch (err) {
+      setError('Query failed. Make sure the backend is running.')
       setMessages(prev => [...prev, {
         role: 'assistant',
-        text: 'Something went wrong. Try again.',
+        text: 'Something went wrong. Please try again.',
         citations: []
       }])
     } finally {
@@ -64,23 +91,9 @@ export default function App() {
     }
   }
 
-  // add this handler
-const handleReset = async (e) => {
-  e.stopPropagation()
-  setResetting(true)
-  try {
-    await resetCollection()
-    setFiles([])
-    setUploaded(false)
-    setMessages([])
-    setQuestion('')
-    document.getElementById('file-input').value = ''
-  } catch (err) {
-    console.error('Reset failed:', err)
-  } finally {
-    setResetting(false)
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') handleSubmit()
   }
-}
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-[var(--bg)]">
@@ -95,13 +108,23 @@ const handleReset = async (e) => {
         </button>
       </div>
 
+      {/* Error banner */}
+      {error && (
+        <div className="w-full max-w-5xl px-6 mt-2">
+          <div className="w-full bg-[var(--danger-dim)] border border-[var(--danger)] text-[var(--danger)] text-xs px-4 py-2 rounded-lg flex justify-between items-center">
+            <span>{error}</span>
+            <button onClick={() => setError(null)} className="ml-4 hover:opacity-70">✕</button>
+          </div>
+        </div>
+      )}
+
       {/* Two panel cards */}
-      <div className="flex gap-6 w-full max-w-5xl px-6 mt-8" style={{ height: 'calc(100vh - 120px)' }}>
+      <div className="flex flex-col md:flex-row gap-6 w-full max-w-5xl px-6 mt-4" style={{ height: 'calc(100vh - 100px)' }}>
 
         {/* Upload panel */}
         <div
           onClick={handleUploadClick}
-          className="w-1/2 min-w-0 flex flex-col items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--surface)] cursor-pointer hover:border-[var(--border-strong)] hover:bg-[var(--surface-raised)] transition-all duration-200 gap-3 p-6 overflow-hidden"
+          className="h-1/2 md:h-full md:w-1/2 flex flex-col items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--surface)] cursor-pointer hover:border-[var(--border-strong)] hover:bg-[var(--surface-raised)] transition-all duration-200 gap-3 p-6 overflow-hidden"
         >
           <input
             id="file-input"
@@ -149,7 +172,7 @@ const handleReset = async (e) => {
         </div>
 
         {/* Chat panel */}
-        <div className="w-1/2 min-w-0 flex flex-col rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
+        <div className="h-1/2 md:h-full md:w-1/2 flex flex-col rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
@@ -188,19 +211,27 @@ const handleReset = async (e) => {
                 </div>
               </div>
             )}
+            <div ref={bottomRef} />
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t border-[var(--border)]">
+          <div className="p-4 border-t border-[var(--border)] flex gap-2">
             <input
               type="text"
               value={question}
               onChange={e => setQuestion(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={uploaded ? 'Ask something... (Enter to send)' : 'Upload a document first'}
+              placeholder={uploaded ? 'Ask something...' : 'Upload a document first'}
               disabled={!uploaded || loading}
-              className="w-full bg-[var(--surface-raised)] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] text-sm px-4 py-3 rounded-xl border border-[var(--border)] focus:outline-none focus:border-[var(--border-strong)] transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex-1 bg-[var(--surface-raised)] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] text-sm px-4 py-3 rounded-xl border border-[var(--border)] focus:outline-none focus:border-[var(--border-strong)] transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
             />
+            <button
+              onClick={handleSubmit}
+              disabled={!uploaded || loading || !question.trim()}
+              className="px-4 py-3 rounded-xl bg-[var(--accent)] text-white text-sm font-medium hover:bg-[var(--accent-hover)] transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Send
+            </button>
           </div>
 
         </div>

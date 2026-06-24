@@ -4,7 +4,7 @@ Upload your documents. Ask anything. Get answers with sources.
 
 An AI-powered document knowledge assistant built with a full RAG (Retrieval-Augmented Generation) pipeline. Upload documents, ask questions, and get accurate answers with cited sources — locally, for free.
 
-![AIAssistant-RAG interface](screenshots/doc-assist-1.png)
+![AIAssistant-RAG interface](screenshots/doc-assist-mobile.png)
 
 ---
 
@@ -25,7 +25,7 @@ An AI-powered document knowledge assistant built with a full RAG (Retrieval-Augm
 
 **Multi-document query** — querying across a financial report and customer support notes simultaneously, with citations tracking which answer came from which file
 
-![Multi-document query](screenshots/doc-assist-3.png)
+![Multi-document query](screenshots/doc-assist-1.png)
 
 ---
 
@@ -173,6 +173,6 @@ AIAssistant-rag/
 
 - [ ] Image support via OCR (Tesseract)
 - [ ] Streaming responses
-- [ ] Auto-scroll to latest message
-- [ ] Mobile responsive layout
+- [x] Auto-scroll to latest message
+- [x] Mobile responsive layout
 - [ ] Deployable Docker setup
